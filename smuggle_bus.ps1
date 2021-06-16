@@ -85,12 +85,14 @@ if (($mode -eq "on") -and ($archive)) {
 	if ($7zip) {
 		$random = Get-Random
 		$random2 = Get-Random
-		$archiveFile = "$busPath\$random`.zip"
-		$archiveFile2 = "$busPath\$random2`.zip"
-		$command1 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile $contraband"
-		$command2 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile2 $archiveFile -p$archivePassword"
+		$archiveFile = "$busPath\$random"
+		$archiveFile2 = "$busPath\$random2"
+		$command1 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile`.zip $contraband"
+		$command2 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile2`.zip $archiveFile -p$archivePassword"
 		cmd.exe /c $command1
+		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
 		cmd.exe /c $command2
+		Rename-Item -Path "$archiveFile2`.zip" -NewName "$archiveFile2"
 		$contraband = (Get-ChildItem $archiveFile2).FullName
 		write-host "*** archive file $archiveFile2 created`nArchive Password is `"$archivePassword`" (not including quotes)"
 	}
@@ -100,10 +102,12 @@ if (($mode -eq "on") -and ($archive)) {
 		$random2 = Get-Random
 		$archiveFile = "$busPath\$random`.zip"
 		$archiveFile2 = "$busPath\$random2`.zip"
-		$command1 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile $contraband"
-		$command2 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile2 $archiveFile -p$archivePassword"
+		$command1 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile`.zip $contraband"
+		$command2 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile2`.zip $archiveFile -p$archivePassword"
 		cmd.exe /c $command1
+		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
 		cmd.exe /c $command2
+		Rename-Item -Path "$archiveFile2`.zip" -NewName "$archiveFile2"
 		$contraband = (Get-ChildItem $archiveFile2).FullName
 		write-host "*** archive file $archiveFile2 created`nArchive Password is `"$archivePassword`" (not including quotes)"
 	}	
