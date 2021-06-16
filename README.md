@@ -20,7 +20,7 @@ Smuggle Bus takes "contraband" file(s) you specify and embed into a random jpg o
 
 ### Basic Smuggle Bus Useage is as follows:
 
-	.\smuggle_bus.ps1 -mode [on/off] -contraband [path to file/file(s) to smuggle] -busPath [path for smuggle buses; default is CWD] -outPath [path for extracted files; default is CWD] -archive [set to $true to enable archive mode] -archivePassword [password for encrypted archive; default is random password] -maskFile [specific mask file you want to use; default is random jpg] -label [smuggle bus file label]
+	.\smuggle_bus.ps1 -mode [on/off] -contraband [path to file(s) to smuggle] -busPath [path for smuggle buses; default is CWD] -outPath [path for extracted files; default is CWD] -archive [set to $true to enable archive mode] -archivePassword [password for encrypted archive; default is random password] -maskFile [specific mask file you want to use; default is random jpg] -label [smuggle bus file label]
 
 ### Here is a detailed summary of parameters:
 - mode : enter either on or off.	On mode embeds files. Off mode extracts them
