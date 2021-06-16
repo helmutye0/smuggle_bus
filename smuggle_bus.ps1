@@ -82,7 +82,7 @@ if (($mode -eq "on") -and ($archive)) {
 		break
 	}
 	
-### archive
+## archive
 	
 	if ($7zip) {
 		$random = Get-Random
