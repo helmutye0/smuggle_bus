@@ -1,7 +1,7 @@
 # smuggle_bus
 file type evasion tool
 
-<## About
+## About
 
 Welcome to Smuggle Bus, your ultimate (or at least pretty good) file type bypass tool
 
@@ -9,13 +9,12 @@ Smuggle Bus was created by Jason Caminsky--direct feedback to @helmutye0 on twit
 
 This tool was created purely for education, research, and legitimate use--if you do bad things with it, it's on you
 
-Features remaining to be implemented:
+### Features remaining to be implemented:
+
 	- auto upload (need to figure out a reliable way to do this--with lots of different auth types this might be tricky)
 	- bash implementation (with mutual compatibility--smuggle buses created with powershell should be extractable via bash, and vice versa)
 
-##>
-
-<## Usage Instructions
+## Usage Instructions
 
 Smuggle Bus takes "contraband" file(s) you specify and embed into a random jpg or other file you specify, or it extracts a file so embedded. You also have the option of creating an encrypted archive for one or more contraband files for enhanced obfuscation. The combination of mask file + embedded file is known in this script as a "smuggle bus".
 
