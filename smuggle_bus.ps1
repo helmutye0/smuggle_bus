@@ -4,7 +4,7 @@
 
 Welcome to Smuggle Bus, your ultimate (or at least pretty good) file type bypass tool
 
-Smuggle Bus was created by Jason Caminsky
+Smuggle Bus was created by Jason Caminsky--direct feedback to @helmutye0 on twitter
 
 This tool was created purely for education, research, and legitimate use--if you do bad things with it, it's on you
 
