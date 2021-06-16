@@ -18,6 +18,10 @@ This tool was created purely for education, research, and legitimate use--if you
 
 Smuggle Bus takes "contraband" file(s) you specify and embed into a random jpg or other file you specify, or it extracts a file so embedded. You also have the option of creating an encrypted archive for one or more contraband files for enhanced obfuscation. The combination of mask file + embedded file is known in this script as a "smuggle bus".
 
+### Basic Smuggle Bus Useage is as follows:
+
+	.\smuggle_bus.ps1 -mode [on/off] -contraband [path to file/file(s) to smuggle] -busPath [path for smuggle buses; default is CWD] -outPath [path for extracted files; default is CWD] -archive [set to $true to enable archive mode] -archivePassword [password for encrypted archive; default is random password] -maskFile [specific mask file you want to use; default is random jpg] -label [smuggle bus file label]
+
 ### Here is a detailed summary of parameters:
 - mode : enter either on or off.	On mode embeds files. Off mode extracts them
 - contraband : in On mode, this is the path to the file(s) you want to embed into your image mask. Supports wildcards (ex C:\path\*.xlsx). No function in Off mode
@@ -27,10 +31,6 @@ Smuggle Bus takes "contraband" file(s) you specify and embed into a random jpg o
 - archivePassword: Default get-random. The password used to encrypt the archive if archive is enabled
  - maskFile : Default random jpg. Option to specify a specific file you want to embed your contraband file(s) in On mode. No function in Off mode
 - label : in Off mode, this is the label Smuggle Bus will use to find and extract smuggle buses in the busPath. Supports multiple labels separated by a comma (ex. -label 123,234,345). No function in On mode
-
-### Basic Smuggle Bus Useage is as follows:
-
-	.\smuggle_bus.ps1 -mode [on/off] -contraband [path to file/file(s) to smuggle] -busPath [path for smuggle buses; default is CWD] -outPath [path for extracted files; default is CWD] -archive [set to $true to enable archive mode] -archivePassword [password for encrypted archive; default is random password] -maskFile [specific mask file you want to use; default is random jpg] -label [smuggle bus file label]
 
 ### Here are some examples of useage:
 - .\smuggle_bus.ps1 -mode on -contraband "C:\Path\to\File.exe" : Will embed File.exe into a random jpg and deposit it in current directory
