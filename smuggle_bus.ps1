@@ -52,9 +52,9 @@ Param (
 	[string]$mode, # mask on / mask off mode switch
 	[string]$contraband, # file(s) we're hiding
 	[int32[]]$label, # the label(s) hidden inside smuggle buses that we use to recognize and extract them
-	[string]$busPath=".\", # path in which to look for files
+	[string]$busPath=".\", # path in which to look for smuggle buses
 	[string]$outPath=".\", # path to output extracted files in off mode
-	[bool]$archive, # option to zip up contents of specified path into encrypted archive before smuggling, specify password
+	[bool]$archive, # option to zip up contents of contraband path into encrypted archive before smuggling in on mode
 	[string]$maskFile, # option to specify a particular mask file
 	[string]$archivePassword=(Get-Random) # password for encrypted archive, only works if $archive is true
 )
