@@ -89,7 +89,7 @@ if (($mode -eq "on") -and ($archive)) {
 		$random2 = Get-Random
 		$archiveFile = "$busPath\$random"
 		$archiveFile2 = "$busPath\$random2"
-		$command1 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile`.zip $contraband"
+		$command1 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile`.zip `"$contraband`""
 		$command2 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile2`.zip $archiveFile -p$archivePassword"
 		cmd.exe /c $command1
 		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
@@ -104,7 +104,7 @@ if (($mode -eq "on") -and ($archive)) {
 		$random2 = Get-Random
 		$archiveFile = "$busPath\$random`.zip"
 		$archiveFile2 = "$busPath\$random2`.zip"
-		$command1 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile`.zip $contraband"
+		$command1 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile`.zip `"$contraband`""
 		$command2 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile2`.zip $archiveFile -p$archivePassword"
 		cmd.exe /c $command1
 		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
