@@ -163,6 +163,9 @@ if ($mode -eq "on") {
 			$mask | set-content -encoding byte -Path $newName
 			$maskLength = (Get-ChildItem $newName).Length
 			$combinedLength = ($contrabandLength+$maskLength)*$contrabandLength
+			
+#### begin label config
+			
 			$2key = $contrabandLength*2
 			$3key = $contrabandLength*3
 			$4key = $contrabandLength*4
@@ -173,6 +176,9 @@ if ($mode -eq "on") {
 			$9key = $contrabandLength*9
 			$key = "$2key$5key$3key"
 			$key2 = "$4key$7key$6key"
+			
+#### end label config			
+			
 			$insert = "$contrabandName|$combinedLength|$archivePassword"
 			$insertEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($insert))
 			$insertEnfolded = "$key$insertEncoded$key2"
@@ -224,24 +230,29 @@ if ($mode -eq "off") {
 	
 ### action
 	
-	ForEach ($l in $label) {
+	ForEach ($contrabandLength in $label) {
 		
-		$2key = $l*2
-		$3key = $l*3
-		$4key = $l*4
-		$5key = $l*5
-		$6key = $l*6
-		$7key = $l*7
-		$8key = $l*8
-		$9key = $l*9
+#### begin label config
+
+		$2key = $contrabandLength*2
+		$3key = $contrabandLength*3
+		$4key = $contrabandLength*4
+		$5key = $contrabandLength*5
+		$6key = $contrabandLength*6
+		$7key = $contrabandLength*7
+		$8key = $contrabandLength*8
+		$9key = $contrabandLength*9
 		$key = "$2key$5key$3key"
 		$key2 = "$4key$7key$6key"
+		
+#### end label config		
+		
 		$combinedFiles=@()
 		
 		$combinedFiles += (Get-ChildItem $busPath\* | select-string $key).Path
 	
 		if (!$combinedFiles) {
-			write-host "XXX No files with label (`"$l`") found`n"
+			write-host "XXX No files with label (`"$contrabandLength`") found`n"
 		} else {
 
 			ForEach ($f in $combinedFiles) {
@@ -254,10 +265,10 @@ if ($mode -eq "off") {
 				$extractDecoded = [System.Text.Encoding]::Unicode.Getstring([System.Convert]::FromBase64String($extractTrim))
 				$contrabandFileName = $extractDecoded.Split("|") | select -index 0
 				$combinedLength = $extractDecoded.Split("|") | select -index 1
-				$combinedLength = $combinedLength/$l
+				$combinedLength = $combinedLength/$contrabandLength
 				$archivePasswordExtract = $extractDecoded.Split("|") | select -index 2
 		
-				$fileLength = $l
+				$fileLength = $contrabandLength
 			
 				set-content -Path $outPath\$contrabandFileName ([byte[]]($combinedBytes | select -last $combinedLength | select -first $fileLength)) -encoding byte
 				write-host "`n*** file $outPath\$contrabandFileName has exited the smuggle bus"
