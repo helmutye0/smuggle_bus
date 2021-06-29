@@ -4,7 +4,7 @@
 
 Welcome to Smuggle Bus, your ultimate (or at least pretty good) file type bypass tool
 
-Smuggle Bus was created by Jason Caminsky--direct feedback to @helmutye0 on twitter
+Smuggle Bus was created by Jason Caminsky
 
 This tool was created purely for education, research, and legitimate use--if you do bad things with it, it's on you
 
@@ -52,9 +52,9 @@ Param (
 	[string]$mode, # mask on / mask off mode switch
 	[string]$contraband, # file(s) we're hiding
 	[int32[]]$label, # the label(s) hidden inside smuggle buses that we use to recognize and extract them
-	[string]$busPath=".\", # path in which to look for smuggle buses
+	[string]$busPath=".\", # path in which to look for files
 	[string]$outPath=".\", # path to output extracted files in off mode
-	[bool]$archive, # option to zip up contents of contraband path into encrypted archive before smuggling in on mode
+	[bool]$archive, # option to zip up contents of specified path into encrypted archive before smuggling, specify password
 	[string]$maskFile, # option to specify a particular mask file
 	[string]$archivePassword=(Get-Random) # password for encrypted archive, only works if $archive is true
 )
@@ -81,8 +81,6 @@ if (($mode -eq "on") -and ($archive)) {
 		write-host "!!! Archive password contains spaces--this is not permitted by script. Please use password without spaces"
 		break
 	}
-	
-## archive
 	
 	if ($7zip) {
 		$random = Get-Random
@@ -147,24 +145,40 @@ if ($mode -eq "on") {
 			if (!$maskFile) {
 				$mask = invoke-webrequest -Uri "https://picsum.photos/500"
 				$mask = $mask.content
+				$newName = Get-Random
+				$newName = "$newName`.jpg"
+				$newName = "$busPath\$newName"
 			} else {
 				$mask = Get-Content -encoding byte $maskFile
+				$newName = (Get-ChildItem $maskFile).Name
+				$newName = "$busPath\$newName"
 			}
 						
 			$contrabandLength = (Get-ChildItem $f).Length
 			$contrabandName = (Get-ChildItem $f).BaseName
 			$contrabandName += (Get-ChildItem $f).Extension
-			$newName = Get-Random
-			$newName = "$newName`.jpg"
-			$newName = "$busPath\$newName"
 
 			$embeddedFile = get-content -encoding byte $f
 
 			$mask | set-content -encoding byte -Path $newName
-			$key = "$contrabandLength$contrabandLength$contrabandLength$contrabandLength$contrabandLength"
-			$insert = "$key$contrabandName|$archivePassword$key"
-			$insert | add-content -Path $newName
+			$maskLength = (Get-ChildItem $newName).Length
+			$combinedLength = ($contrabandLength+$maskLength)*$contrabandLength
+			$2key = $contrabandLength*2
+			$3key = $contrabandLength*3
+			$4key = $contrabandLength*4
+			$5key = $contrabandLength*5
+			$6key = $contrabandLength*6
+			$7key = $contrabandLength*7
+			$8key = $contrabandLength*8
+			$9key = $contrabandLength*9
+			$key = "$2key$5key$3key"
+			$key2 = "$4key$7key$6key"
+			$insert = "$contrabandName|$combinedLength|$archivePassword"
+			$insertEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($insert))
+			$insertEnfolded = "$key$insertEncoded$key2"
+			$insertEnfolded | add-content -Path $newName
 			$embeddedFile | add-content -encoding byte -Path $newName  # we now have a jpg that contains our face file
+			$mask | add-content -encoding byte -Path $newName
 
 			$combinedFilePath = (Get-ChildItem $newName).FullName
 			write-host "*** $contrabandName has boarded the smuggle bus $combinedFilePath`nTo extract it, use -label $contrabandLength"
@@ -211,8 +225,17 @@ if ($mode -eq "off") {
 ### action
 	
 	ForEach ($l in $label) {
-	
-		$key="$l$l$l$l$l"
+		
+		$2key = $l*2
+		$3key = $l*3
+		$4key = $l*4
+		$5key = $l*5
+		$6key = $l*6
+		$7key = $l*7
+		$8key = $l*8
+		$9key = $l*9
+		$key = "$2key$5key$3key"
+		$key2 = "$4key$7key$6key"
 		$combinedFiles=@()
 		
 		$combinedFiles += (Get-ChildItem $busPath\* | select-string $key).Path
@@ -225,14 +248,18 @@ if ($mode -eq "off") {
 				$combinedBytes = get-content -encoding byte -Path $f
 				$combinedContent = get-content -Path $f
 				$combinedFileName = (get-childitem $f).Name
-				$pattern = "$key(.*)$key"
-				$extract = ([regex]::match($combinedContent,$pattern).Groups[1].Value).Trim()
-				$contrabandFileName = $extract.Split("|") | select -index 0
-				$archivePasswordExtract = $extract.Split("|") | select -index 1
+				$pattern = "$key(.*)$key2"
+				$extractRaw = ([regex]::match($combinedContent,$pattern).Groups[1].Value)
+				$extractTrim = $extractRaw.Trim()
+				$extractDecoded = [System.Text.Encoding]::Unicode.Getstring([System.Convert]::FromBase64String($extractTrim))
+				$contrabandFileName = $extractDecoded.Split("|") | select -index 0
+				$combinedLength = $extractDecoded.Split("|") | select -index 1
+				$combinedLength = $combinedLength/$l
+				$archivePasswordExtract = $extractDecoded.Split("|") | select -index 2
 		
 				$fileLength = $l
 			
-				set-content -Path $outPath\$contrabandFileName ([byte[]]($combinedBytes | select -last $fileLength)) -encoding byte
+				set-content -Path $outPath\$contrabandFileName ([byte[]]($combinedBytes | select -last $combinedLength | select -first $fileLength)) -encoding byte
 				write-host "`n*** file $outPath\$contrabandFileName has exited the smuggle bus"
 			
 				if ($archivePasswordExtract -ne "0") {
