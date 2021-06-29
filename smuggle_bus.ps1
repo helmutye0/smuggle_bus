@@ -166,16 +166,28 @@ if ($mode -eq "on") {
 			
 #### begin label config
 			
-			$2key = $contrabandLength*2
+			#$1key = $contrabandLength
+			#$2key = $contrabandLength*2
 			$3key = $contrabandLength*3
 			$4key = $contrabandLength*4
-			$5key = $contrabandLength*5
+			#$5key = $contrabandLength*5
 			$6key = $contrabandLength*6
 			$7key = $contrabandLength*7
-			$8key = $contrabandLength*8
-			$9key = $contrabandLength*9
-			$key = "$2key$5key$3key"
-			$key2 = "$4key$7key$6key"
+			#$8key = $contrabandLength*8
+			#$9key = $contrabandLength*9
+			
+			#$11key = $contrabandLength
+			#$22key = $contrabandLength*2
+			#$33key = $contrabandLength*3
+			$44key = $contrabandLength*4
+			$55key = $contrabandLength*5
+			#$66key = $contrabandLength*6
+			$77key = $contrabandLength*7
+			$88key = $contrabandLength*8
+			#$99key = $contrabandLength*9
+			
+			$key = "$1key$2key$3key$4key$5key$6key$7key$8key$9key"
+			$key2 = "$11key$22key$33key$44key$55key$66key$77key$88key$99key"
 			
 #### end label config			
 			
@@ -233,19 +245,31 @@ if ($mode -eq "off") {
 	ForEach ($contrabandLength in $label) {
 		
 #### begin label config
-
-		$2key = $contrabandLength*2
-		$3key = $contrabandLength*3
-		$4key = $contrabandLength*4
-		$5key = $contrabandLength*5
-		$6key = $contrabandLength*6
-		$7key = $contrabandLength*7
-		$8key = $contrabandLength*8
-		$9key = $contrabandLength*9
-		$key = "$2key$5key$3key"
-		$key2 = "$4key$7key$6key"
-		
-#### end label config		
+			
+			#$1key = $contrabandLength
+			#$2key = $contrabandLength*2
+			$3key = $contrabandLength*3
+			$4key = $contrabandLength*4
+			#$5key = $contrabandLength*5
+			$6key = $contrabandLength*6
+			$7key = $contrabandLength*7
+			#$8key = $contrabandLength*8
+			#$9key = $contrabandLength*9
+			
+			#$11key = $contrabandLength
+			#$22key = $contrabandLength*2
+			#$33key = $contrabandLength*3
+			$44key = $contrabandLength*4
+			$55key = $contrabandLength*5
+			#$66key = $contrabandLength*6
+			$77key = $contrabandLength*7
+			$88key = $contrabandLength*8
+			#$99key = $contrabandLength*9
+			
+			$key = "$1key$2key$3key$4key$5key$6key$7key$8key$9key"
+			$key2 = "$11key$22key$33key$44key$55key$66key$77key$88key$99key"
+			
+#### end label config
 		
 		$combinedFiles=@()
 		
