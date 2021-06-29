@@ -168,10 +168,10 @@ if ($mode -eq "on") {
 			
 			#$1key = $contrabandLength
 			#$2key = $contrabandLength*2
-			$3key = $contrabandLength*3
-			$4key = $contrabandLength*4
+			#$3key = $contrabandLength*3
+			#$4key = $contrabandLength*4
 			#$5key = $contrabandLength*5
-			$6key = $contrabandLength*6
+			#$6key = $contrabandLength*6
 			$7key = $contrabandLength*7
 			#$8key = $contrabandLength*8
 			#$9key = $contrabandLength*9
@@ -179,11 +179,11 @@ if ($mode -eq "on") {
 			#$11key = $contrabandLength
 			#$22key = $contrabandLength*2
 			#$33key = $contrabandLength*3
-			$44key = $contrabandLength*4
+			#$44key = $contrabandLength*4
 			$55key = $contrabandLength*5
 			#$66key = $contrabandLength*6
 			$77key = $contrabandLength*7
-			$88key = $contrabandLength*8
+			#$88key = $contrabandLength*8
 			#$99key = $contrabandLength*9
 			
 			$key = "$1key$2key$3key$4key$5key$6key$7key$8key$9key"
@@ -248,10 +248,10 @@ if ($mode -eq "off") {
 			
 			#$1key = $contrabandLength
 			#$2key = $contrabandLength*2
-			$3key = $contrabandLength*3
-			$4key = $contrabandLength*4
+			#$3key = $contrabandLength*3
+			#$4key = $contrabandLength*4
 			#$5key = $contrabandLength*5
-			$6key = $contrabandLength*6
+			#$6key = $contrabandLength*6
 			$7key = $contrabandLength*7
 			#$8key = $contrabandLength*8
 			#$9key = $contrabandLength*9
@@ -259,11 +259,11 @@ if ($mode -eq "off") {
 			#$11key = $contrabandLength
 			#$22key = $contrabandLength*2
 			#$33key = $contrabandLength*3
-			$44key = $contrabandLength*4
+			#$44key = $contrabandLength*4
 			$55key = $contrabandLength*5
 			#$66key = $contrabandLength*6
 			$77key = $contrabandLength*7
-			$88key = $contrabandLength*8
+			#$88key = $contrabandLength*8
 			#$99key = $contrabandLength*9
 			
 			$key = "$1key$2key$3key$4key$5key$6key$7key$8key$9key"
@@ -273,7 +273,7 @@ if ($mode -eq "off") {
 		
 		$combinedFiles=@()
 		
-		$combinedFiles += (Get-ChildItem $busPath\* | select-string $key).Path
+		$combinedFiles += (Get-ChildItem $busPath\* | select-string $key | select-string $key2).Path
 	
 		if (!$combinedFiles) {
 			write-host "XXX No files with label (`"$contrabandLength`") found`n"
