@@ -13,9 +13,10 @@ This tool was created purely for education, research, and legitimate use--if you
 
 - auto upload (need to figure out a reliable way to do this--with lots of different auth types this might be tricky)
 - bash implementation (with mutual compatibility--smuggle buses created with powershell should be extractable via bash, and vice versa)
-- alternate label/file info encoding (currently labels with five iterations of contraband file length and places file name/archive password between two such iterations, but it would be cool to use something more randomized/obscure to encode/decode this information)
+- (COMPLETE) alternate label/file info encoding (currently labels with five iterations of contraband file length and places file name/archive password between two such iterations, but it would be cool to use something more randomized/obscure to encode/decode this information)
 - Recursiveness (I would like to include the options to recursively pull in contraband files to allow quick and easy exfil of directories/archiving of multiple levels of files to be smuggled on-network, and also to recursively search through directories for smuggle buses to extract)
 - Multiple busPaths/"the usual suspects" option (it would be useful to be able to run Smuggle Bus through any and all common locations that would have downloaded/cached media content, like multiple browser caches/Downloads/Pictures/Music etc)
+- (COMPLETE) File Sandwiching (rather than simply appending the contraband file to the end of the mask file, it would be better to hide the contraband file in the middle of the file, with valid mask file content before and after; the idea setup would be to have the entire mask file at the start, then the contraband file, then the last X bytes of the mask file at the end so inspection from both the beginning and end of the file will be consistent with the mask file)
 
 ## Usage Instructions
 
