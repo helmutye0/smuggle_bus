@@ -64,7 +64,12 @@ write-host "`n`n"
 ### mask on filters
 
 if (($mode -eq "on") -and (!$contraband)) {
-	write-host "!!! When using mask on mode, you must specify a -contraband file"
+	write-host "!!! When using mask on mode, you must specify a -contraband file`n"
+	break
+}
+
+if (($mode -eq "on") -and ($maskFile) -and ((Get-ChildItem $maskFile).Length -lt 16000)) {
+	write-host "!!! The minimum size for a mask file is 16,000 bytes`n"
 	break
 }
 
@@ -73,12 +78,12 @@ if (($mode -eq "on") -and ($archive)) {
 	$winRAR= Test-Path "c:\Program Files\winRAR\winRAR.exe"
 	
 	if ((!$7zip) -and (!$winRAR)) {
-		write-host "!!! Archive mode specified, but host does not have 7zip or winRAR"
+		write-host "!!! Archive mode specified, but host does not have 7zip or winRAR`n"
 		break
 	}
 	
 	if ($archivePassword -match " ") {
-		write-host "!!! Archive password contains spaces--this is not permitted by script. Please use password without spaces"
+		write-host "!!! Archive password contains spaces--this is not permitted by script. Please use password without spaces`n"
 		break
 	}
 	
@@ -148,10 +153,12 @@ if ($mode -eq "on") {
 				$newName = Get-Random
 				$newName = "$newName`.jpg"
 				$newName = "$busPath\$newName"
+				$mask | set-content -encoding byte -Path $newName
 			} else {
 				$mask = Get-Content -encoding byte $maskFile
 				$newName = (Get-ChildItem $maskFile).Name
 				$newName = "$busPath\$newName"
+				copy $maskFile $newName
 			}
 						
 			$contrabandLength = (Get-ChildItem $f).Length
@@ -160,9 +167,8 @@ if ($mode -eq "on") {
 
 			$embeddedFile = get-content -encoding byte $f
 
-			$mask | set-content -encoding byte -Path $newName
 			$maskLength = (Get-ChildItem $newName).Length
-			$combinedLength = ($contrabandLength+$maskLength)*$contrabandLength
+			$combinedLength = $maskLength*$contrabandLength
 			
 #### begin label config
 			
@@ -196,7 +202,7 @@ if ($mode -eq "on") {
 			$insertEnfolded = "$key$insertEncoded$key2"
 			$insertEnfolded | add-content -Path $newName
 			$embeddedFile | add-content -encoding byte -Path $newName  # we now have a jpg that contains our face file
-			$mask | add-content -encoding byte -Path $newName
+			$mask | select -last 16000 | add-content -encoding byte -Path $newName
 
 			$combinedFilePath = (Get-ChildItem $newName).FullName
 			write-host "*** $contrabandName has boarded the smuggle bus $combinedFilePath`nTo extract it, use -label $contrabandLength"
@@ -283,6 +289,7 @@ if ($mode -eq "off") {
 				$combinedBytes = get-content -encoding byte -Path $f
 				$combinedContent = get-content -Path $f
 				$combinedFileName = (get-childitem $f).Name
+				$combinedFileLength = (get-childitem $f).Length
 				$pattern = "$key(.*)$key2"
 				$extractRaw = ([regex]::match($combinedContent,$pattern).Groups[1].Value)
 				$extractTrim = $extractRaw.Trim()
@@ -293,8 +300,10 @@ if ($mode -eq "off") {
 				$archivePasswordExtract = $extractDecoded.Split("|") | select -index 2
 		
 				$fileLength = $contrabandLength
+				
+				#$extractLength = $combinedFileLength - $combinedLength - $fileLength - 16000
 			
-				set-content -Path $outPath\$contrabandFileName ([byte[]]($combinedBytes | select -last $combinedLength | select -first $fileLength)) -encoding byte
+				set-content -Path $outPath\$contrabandFileName ([byte[]]($combinedBytes | select -last ($fileLength + 16000) | select -first $fileLength)) -encoding byte
 				write-host "`n*** file $outPath\$contrabandFileName has exited the smuggle bus"
 			
 				if ($archivePasswordExtract -ne "0") {
