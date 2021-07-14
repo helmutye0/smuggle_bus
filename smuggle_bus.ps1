@@ -56,7 +56,8 @@ Param (
 	[string]$outPath=".\", # path to output extracted files in off mode
 	[bool]$archive, # option to zip up contents of specified path into encrypted archive before smuggling, specify password
 	[string]$maskFile, # option to specify a particular mask file
-	[string]$archivePassword=(Get-Random) # password for encrypted archive, only works if $archive is true
+	[string]$archivePassword="", # password for encrypted archive, only works if $archive is true
+	[bool]$autoExtract # in off mode, automatically extract any archived files
 )
 
 write-host "`n`n"
@@ -87,12 +88,24 @@ if (($mode -eq "on") -and ($archive)) {
 		break
 	}
 	
+	if (!$archivePassword) {
+		$passChars = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ23456789()_-,.()_-,.()_-,.()_-,.()_-,.@#$%^*()_+-=[];:'\,<.>/?".ToCharArray()
+		1..5 | ForEach {  $archivePassword+= $passChars | Get-Random }
+	}
+	
 	if ($7zip) {
-		$random = Get-Random
-		$random2 = Get-Random
+		$chars = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ23456789()_-,()_-,()_-,()_-,()_-,".ToCharArray()
+		$charsEnd = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ23456789".ToCharArray()
+		$random=""
+		$random2=""
+		1..10 | ForEach {  $random+= $chars | Get-Random }
+		$random+= $charsEnd | Get-Random
+		1..10 | ForEach {  $random2+= $chars | Get-Random }
+		$random2+= $charsEnd | Get-Random
+		
 		$archiveFile = "$busPath\$random"
 		$archiveFile2 = "$busPath\$random2"
-		$command1 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile`.zip `"$contraband`""
+		$command1 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile`.zip `"$contraband`" -p$archivePassword"
 		$command2 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile2`.zip $archiveFile -p$archivePassword"
 		cmd.exe /c $command1
 		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
@@ -103,11 +116,18 @@ if (($mode -eq "on") -and ($archive)) {
 	}
 	
 	if ((!$7zip) -and ($winRAR)) {
-		$random = Get-Random
-		$random2 = Get-Random
-		$archiveFile = "$busPath\$random`.zip"
-		$archiveFile2 = "$busPath\$random2`.zip"
-		$command1 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile`.zip `"$contraband`""
+		$chars = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ23456789()_-,()_-,()_-,()_-,()_-,".ToCharArray()
+		$charsEnd = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ23456789".ToCharArray()
+		$random=""
+		$random2=""
+		1..10 | ForEach {  $random+= $chars | Get-Random }
+		$random+= $charsEnd | Get-Random
+		1..10 | ForEach {  $random2+= $chars | Get-Random }
+		$random2+= $charsEnd | Get-Random
+		
+		$archiveFile = "$busPath\$random"
+		$archiveFile2 = "$busPath\$random2"
+		$command1 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile`.zip `"$contraband`" -p$archivePassword"
 		$command2 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile2`.zip $archiveFile -p$archivePassword"
 		cmd.exe /c $command1
 		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
@@ -135,6 +155,7 @@ if ($mode -eq "on") {
 	$newName="" # name of combined random jpg and hidden file
 	$embeddedFile="" # contents of the hidden file
 	[byte]$combined="" # combined contents of random jpg and hidden file
+	[byte]$nullByte = 0x00
 
 #### action
 	$contrabandFiles=@()
@@ -164,6 +185,9 @@ if ($mode -eq "on") {
 			$contrabandLength = (Get-ChildItem $f).Length
 			$contrabandName = (Get-ChildItem $f).BaseName
 			$contrabandName += (Get-ChildItem $f).Extension
+			$contrabandExtension = (Get-ChildItem $f).Extension
+			
+			if (!$contrabandExtension) { $contrabandExtension = "0" }
 
 			$embeddedFile = get-content -encoding byte $f
 
@@ -193,14 +217,32 @@ if ($mode -eq "on") {
 			#$99key = $contrabandLength*9
 			
 			$key = "$1key$2key$3key$4key$5key$6key$7key$8key$9key"
+			$keyHash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::New([System.Text.Encoding]::ASCII.GetBytes($key)))).Hash
+			$key = $keyHash.Substring(0,3)
+			$key += $keyHash.Substring(($keyHash.length - 5),3)
 			$key2 = "$11key$22key$33key$44key$55key$66key$77key$88key$99key"
+			$key2Hash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::New([System.Text.Encoding]::ASCII.GetBytes($key2)))).Hash
+			$key2 = $key2Hash.Substring(0,3)
+			$key2 += $key2Hash.Substring(($key2Hash.length - 5),3)
 			
 #### end label config			
 			
-			$insert = "$contrabandName|$combinedLength|$archivePassword"
-			$insertEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($insert))
-			$insertEnfolded = "$key$insertEncoded$key2"
-			$insertEnfolded | add-content -Path $newName
+			$insert = "$archivePassword!$contrabandExtension"
+			#$insertEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($insert))
+			$insertEncoded = $insert
+			$insertArray = $insertEncoded -split '(?<=\D)(?=\d)'
+			1..24|%{[byte](Get-Random -Minimum ([byte]::MinValue) -Maximum ([byte]::MaxValue))} | add-content -Path $newName -encoding byte -NoNewLine
+			$key | add-content -NoNewLine -Path $newName
+			1..4|%{[byte](Get-Random -Minimum 0 -Maximum 30)} | add-content -Path $newName -encoding byte -NoNewLine
+			
+			ForEach ($i in $insertArray) {
+				$i | add-content -NoNewLine -Path $newName
+				1..4|%{[byte](Get-Random -Minimum 0 -Maximum 30)} | add-content -Path $newName -encoding byte -NoNewLine
+			}
+			
+			1..4|%{[byte](Get-Random -Minimum 0 -Maximum 30)} | add-content -Path $newName -encoding byte -NoNewLine
+			$key2 | add-content -NoNewLine -Path $newName
+			1..52|%{[byte](Get-Random -Minimum ([byte]::MinValue) -Maximum ([byte]::MaxValue))} | add-content -Path $newName -encoding byte -NoNewLine			
 			$embeddedFile | add-content -encoding byte -Path $newName  # we now have a jpg that contains our face file
 			$mask | select -last 16000 | add-content -encoding byte -Path $newName
 
@@ -208,8 +250,8 @@ if ($mode -eq "on") {
 			write-host "*** $contrabandName has boarded the smuggle bus $combinedFilePath`nTo extract it, use -label $contrabandLength"
 			
 			if ($archive) {
-				del $archiveFile
-				del $archiveFile2
+				Remove-Item $archiveFile
+				Remove-Item $archiveFile2
 			}
 		}
 	}
@@ -221,7 +263,7 @@ if ($mode -eq "on") {
 ## mask off filters
 
 if (($mode -eq "off") -and (!$label)) {
-	write-host "!!! You must specify a file label (or omit parameter--default value is `"smug`")`n"
+	write-host "!!! You must specify a file label`n"
 	break
 }
 
@@ -273,13 +315,19 @@ if ($mode -eq "off") {
 			#$99key = $contrabandLength*9
 			
 			$key = "$1key$2key$3key$4key$5key$6key$7key$8key$9key"
+			$keyHash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::New([System.Text.Encoding]::ASCII.GetBytes($key)))).Hash
+			$key = $keyHash.Substring(0,3)
+			$key += $keyHash.Substring(($keyHash.length - 5),3)
 			$key2 = "$11key$22key$33key$44key$55key$66key$77key$88key$99key"
+			$key2Hash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::New([System.Text.Encoding]::ASCII.GetBytes($key2)))).Hash
+			$key2 = $key2Hash.Substring(0,3)
+			$key2 += $key2Hash.Substring(($key2Hash.length - 5),3)
 			
 #### end label config
 		
 		$combinedFiles=@()
 		
-		$combinedFiles += (Get-ChildItem $busPath\* | select-string $key | select-string $key2).Path
+		$combinedFiles += ((Get-ChildItem $busPath\* | select-string $key).Path | Get-ChildItem | select-string $key2).Path
 	
 		if (!$combinedFiles) {
 			write-host "XXX No files with label (`"$contrabandLength`") found`n"
@@ -293,18 +341,22 @@ if ($mode -eq "off") {
 				$pattern = "$key(.*)$key2"
 				$extractRaw = ([regex]::match($combinedContent,$pattern).Groups[1].Value)
 				$extractTrim = $extractRaw.Trim()
-				$extractDecoded = [System.Text.Encoding]::Unicode.Getstring([System.Convert]::FromBase64String($extractTrim))
-				$contrabandFileName = $extractDecoded.Split("|") | select -index 0
-				$combinedLength = $extractDecoded.Split("|") | select -index 1
-				$combinedLength = $combinedLength/$contrabandLength
-				$archivePasswordExtract = $extractDecoded.Split("|") | select -index 2
+				$extractTrim = $extractTrim -replace "[^ -x7e]",""
+				#$extractDecoded = [System.Text.Encoding]::Unicode.Getstring([System.Convert]::FromBase64String($extractTrim))
+				$extractDecoded = $extractTrim
+				$contrabandFileName = $extractDecoded.Split("!") | select -index 1
+				$contrabandFileName = $contrabandFileName.Trim()
+				if ($contrabandFileName = "0") { $contrabandFileName = "" }
+				$archivePasswordExtract = $extractDecoded.Split("!") | select -index 0
+				$archivePasswordExtract = $archivePasswordExtract.Trim()
 		
 				$fileLength = $contrabandLength
+				$contrabandOutRandom = Get-Random
 				
 				#$extractLength = $combinedFileLength - $combinedLength - $fileLength - 16000
 			
-				set-content -Path $outPath\$contrabandFileName ([byte[]]($combinedBytes | select -last ($fileLength + 16000) | select -first $fileLength)) -encoding byte
-				write-host "`n*** file $outPath\$contrabandFileName has exited the smuggle bus"
+				set-content -Path "$outPath\$contrabandOutRandom$contrabandFileName" ([byte[]]($combinedBytes | select -last ($fileLength + 16000) | select -first $fileLength)) -encoding byte
+				write-host "`n*** file $outPath\$contrabandOutRandom$contrabandFileName has exited the smuggle bus"
 			
 				if ($archivePasswordExtract -ne "0") {
 					write-host "*** ARCHIVE DETECTED"
@@ -317,17 +369,43 @@ if ($mode -eq "off") {
 					}
 				
 					if ($7zip) {
+						
+						if ($autoExtract) {
+							$extractCommand = "`"c:\Program Files\7-Zip\7z.exe`" e `"$outPath\$contrabandOutRandom$contrabandFileName`" -p$archivePasswordExtract -o$outPath\*"
+							$extractCommand2 = "`"c:\Program Files\7-Zip\7z.exe`" e `"$outPath\$contrabandOutRandom$contrabandFileName~`" -p$archivePasswordExtract -o$outPath\*"
+							cmd /c $extractCommand
+							cmd /c $extractCommand2
+							Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName" -Recurse
+							Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName~" -Recurse
+							$extractDir = (Get-Childitem "$outPath\*~" | sort LastWriteTime | select -last 1).FullName
+							Copy-Item -Path "$extractDir/*" -Destination $outPath -Recurse
+							Remove-Item $extractDir -Recurse
+						} else {
 				
 						write-host "*** Can unzip via following command:`n"
-						write-host "cmd.exe /c `"c:\Program Files\7-Zip\7z.exe`" e $outPath\$contrabandFileName"
+						write-host "cmd.exe /c `"c:\Program Files\7-Zip\7z.exe`" e $outPath\$contrabandOutRandom$contrabandFileName"
 						write-host "Archive Password: $archivePasswordExtract"
-				
+						}
 					}
 				
 					if ((!$7zip) -and ($winRAR)) {
+						
+						if ($autoExtract) {
+							$extractCommand = "`"c:\Program Files\winRAR\winRAR.exe`" e $outPath\$contrabandOutRandom$contrabandFileName -p$archivePasswordExtract -o$outPath\*"
+							$extractCommand2 = "`"c:\Program Files\winRAR\winRAR.exe`" e $outPath\$contrabandOutRandom$contrabandFileName~ -p`"$archivePasswordExtract`" -o$outPath\*"
+							cmd /c $extractCommand
+							cmd /c $extractCommand2
+							Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName" -Recurse
+							Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName~" -Recurse
+							$extractDir = (Get-Childitem "$outPath\*~" | sort LastWriteTime | select -last 1).FullName
+							Copy-Item -Path "$extractDir/*" -Destination $outPath -Recurse
+							Remove-Item $extractDir -Recurse
+						} else {
+							
 						write-host "*** Can unzip via following command:`n"
-						write-host "cmd.exe /c `"c:\Program Files\winRAR\winRAR.exe`" x $outPath\$contrabandFileName"
+						write-host "cmd.exe /c `"c:\Program Files\winRAR\winRAR.exe`" x $outPath\$contrabandOutRandom$contrabandFileName"
 						write-host "Archive Password: $archivePasswordExtract"
+						}
 					}
 				}
 			
