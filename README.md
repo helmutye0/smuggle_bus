@@ -32,9 +32,10 @@ Smuggle Bus takes "contraband" file(s) you specify and embed into a random jpg o
 - busPath : Default current directory. This specifies where your smuggle buses will come out (in On mode) or where your smuggle buses to be extracted are (in Off mode)
 - outpath : Default current directory. This specifies where your extracted files will come out (in Off mode). No function in On mode
 - archive : Default $false, supply value $true to enable. Option to zip up contraband file(s) in an encrypted archive in On mode. No function in Off mode. NOTE: archiving requires either 7zip or winRAR on host
-- archivePassword: Default get-random. The password used to encrypt the archive if archive is enabled
+- archivePassword: Default is random. The password used to encrypt the archive if archive is enabled
  - maskFile : Default random jpg. Option to specify a specific file you want to embed your contraband file(s) in On mode. No function in Off mode
 - label : in Off mode, this is the label Smuggle Bus will use to find and extract smuggle buses in the busPath. Supports multiple labels separated by a comma (ex. -label 123,234,345). No function in On mode
+- autoExtract : in Off mode, when extracting an encrypted archive, this will automatically extract all the files in the archive and put them in the outPath
 
 ### Here are some examples of useage:
 - .\smuggle_bus.ps1 -mode on -contraband "C:\Path\to\File.exe" : Will embed File.exe into a random jpg and deposit it in current directory
