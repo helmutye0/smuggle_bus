@@ -1,6 +1,8 @@
 # smuggle_bus
 file type evasion tool
 
+Demo and Discussion Video: https://www.youtube.com/watch?v=92KRJRhhMyA
+
 ## About
 
 Welcome to Smuggle Bus, your ultimate (or at least pretty good) file type bypass tool
