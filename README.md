@@ -22,6 +22,11 @@ There are two variants of Smuggle Bus--regular (embeds/extracts files from a mas
 - Multiple busPaths/"the usual suspects" option (it would be useful to be able to run Smuggle Bus through any and all common locations that would have downloaded/cached media content, like multiple browser caches/Downloads/Pictures/Music etc)
 - (COMPLETE) File Sandwiching (rather than simply appending the contraband file to the end of the mask file, it would be better to hide the contraband file in the middle of the file, with valid mask file content before and after; the idea setup would be to have the entire mask file at the start, then the contraband file, then the last X bytes of the mask file at the end so inspection from both the beginning and end of the file will be consistent with the mask file)
 
+### Known Issues
+
+- Occasional errors in off mode with an encrypted archive (unexpected end of archive); possibly related to randomly generated file names/passwords/certain random byte combinations
+- Occasional error in on mode due to some issue with certain random filename characters and constructing 7zip command
+
 ## Usage Instructions
 
 Smuggle Bus takes "contraband" file(s) you specify and embed into a random jpg or other file you specify, or it extracts a file so embedded. You also have the option of creating an encrypted archive for one or more contraband files for enhanced obfuscation. The combination of mask file + embedded file is known in this script as a "smuggle bus".
