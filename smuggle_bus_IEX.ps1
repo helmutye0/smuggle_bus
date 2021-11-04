@@ -8,9 +8,7 @@ Smuggle Bus was created by Jason Caminsky
 
 This tool was created purely for education, research, and legitimate use--if you do bad things with it, it's on you
 
-Features remaining to be implemented:
-	- auto upload (need to figure out a reliable way to do this--with lots of different auth types this might be tricky)
-	- bash implementation (with mutual compatibility--smuggle buses created with powershell should be extractable via bash, and vice versa)
+This version of Smuggle Bus is intended to smuggle powershell scripts. When extracted, it will automatically load them into memory and execute them via Invoke-Expression
 
 ##>
 
