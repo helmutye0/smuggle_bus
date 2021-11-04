@@ -106,7 +106,7 @@ if (($mode -eq "on") -and ($archive)) {
 		$archiveFile = "$busPath\$random"
 		$archiveFile2 = "$busPath\$random2"
 		$command1 = "`"c:\Program Files\7-Zip\7z.exe`" a `"$archiveFile`.zip`" `"$contraband`" -p`"$archivePassword`""
-		$command2 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile2`.zip $archiveFile -p$archivePassword"
+		$command2 = "`"c:\Program Files\7-Zip\7z.exe`" a `"$archiveFile2`.zip`" `"$archiveFile`" -p`"$archivePassword`""
 		cmd.exe /c $command1
 		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
 		cmd.exe /c $command2
@@ -128,7 +128,7 @@ if (($mode -eq "on") -and ($archive)) {
 		$archiveFile = "$busPath\$random"
 		$archiveFile2 = "$busPath\$random2"
 		$command1 = "`"c:\Program Files\winRAR\winRAR.exe`" a `"$archiveFile`.zip`" `"$contraband`" -p`"$archivePassword`""
-		$command2 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile2`.zip $archiveFile -p$archivePassword"
+		$command2 = "`"c:\Program Files\winRAR\winRAR.exe`" a `"$archiveFile2`.zip`" `"$archiveFile`" -p`"$archivePassword`""
 		cmd.exe /c $command1
 		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
 		cmd.exe /c $command2
@@ -413,8 +413,8 @@ if ($mode -eq "off") {
 					if ($7zip) {
 						
 						if ($autoExtract) {
-							$extractCommand = "`"c:\Program Files\7-Zip\7z.exe`" e `"$outPath\$contrabandOutRandom$contrabandFileName`" -p$archivePasswordExtract -o$outPath\*"
-							$extractCommand2 = "`"c:\Program Files\7-Zip\7z.exe`" e `"$outPath\$contrabandOutRandom$contrabandFileName~`" -p$archivePasswordExtract -o$outPath\*"
+							$extractCommand = "`"c:\Program Files\7-Zip\7z.exe`" e `"$outPath\$contrabandOutRandom$contrabandFileName`" -p`"$archivePasswordExtract`" -o`"$outPath\*`""
+							$extractCommand2 = "`"c:\Program Files\7-Zip\7z.exe`" e `"$outPath\$contrabandOutRandom$contrabandFileName~`" -p`"$archivePasswordExtract`" -o`"$outPath\*`""
 							cmd /c $extractCommand
 							cmd /c $extractCommand2
 							#Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName" -Recurse
