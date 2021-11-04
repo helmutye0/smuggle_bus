@@ -11,22 +11,26 @@ This tool was created purely for education, research, and legitimate use--if you
 Features remaining to be implemented:
 	- auto upload (need to figure out a reliable way to do this--with lots of different auth types this might be tricky)
 	- bash implementation (with mutual compatibility--smuggle buses created with powershell should be extractable via bash, and vice versa)
+	
+Known Issues:
+	- Occasional errors in off mode with an encrypted archive (unexpected end of archive); possibly related to randomly generated file names/passwords/certain random byte combinations
 
 ##>
 
 <## Usage Instructions
 
-Smuggle Bus takes "contraband" file(s) you specify and embed into a random jpg or other file you specify, or it extracts a file so embedded. You also have the option of creating an encrypted archive for one or more contraband files for enhanced obfuscation. The combination of mask file + embedded file is known in this script as a "smuggle bus".
+Smuggle Bus takes "contraband" file(s) you specify and embed into a random jpg or other file you specify, or it extracts a file so embedded. You also have the option of creating an encrypted archive for one or more contraband files for enhanced obfuscation.
 
 Here is a detailed summary of parameters:
  	-mode : enter either on or off.	On mode embeds files. Off mode extracts them
  	-contraband : in On mode, this is the path to the file(s) you want to embed into your image mask. Supports wildcards (ex C:\path\*.xlsx). No function in Off mode
- 	-busPath : Default current directory. This specifies where your smuggle buses will come out (in On mode) or where your smuggle buses to be extracted are (in Off mode)
+ 	-busPath : Default current directory. This specifies where your combined files will come out (in On mode) or where your combined files to be extracted are (in Off mode)
 	-outpath : Default current directory. This specifies where your extracted files will come out (in Off mode). No function in On mode
  	-archive : Default $false, supply value $true to enable. Option to zip up contraband file(s) in an encrypted archive in On mode. No function in Off mode. NOTE: archiving requires either 7zip or winRAR on host
-	-archivePassword: Default get-random. The password used to encrypt the archive if archive is enabled
+	-archivePassword: Default is randomly generated. The password used to encrypt the archive if archive is enabled
  	-maskFile : Default random jpg. Option to specify a specific file you want to embed your contraband file(s) in On mode. No function in Off mode
 	-label : in Off mode, this is the label Smuggle Bus will use to find and extract smuggle buses in the busPath. Supports multiple labels separated by a comma (ex. -label 123,234,345). No function in On mode
+	- autoExtract : default $false, supply value $true to enable. Option to automatically extract 
 
  Here are some examples of useage:
 	 * .\smuggle_bus.ps1 -mode on -contraband "C:\Path\to\File.exe" : Will embed File.exe into a random jpg and deposit it in current directory
@@ -37,10 +41,6 @@ Here is a detailed summary of parameters:
 	 * .\smuggle_bus.ps1 -mode off -label 123 : Will search current directory for all files labeled with 123 and attempt to extract the embedded file
 	 * .\smuggle_bus.ps1 -mode off -busPath "C:\Other\Path\" -label 123 : Will search C:\Other\Path\ for any files labeled with 123 and attempt to extract the embedded file into the current directory
 	 * .\smuggle_bus.ps1 -mode off -busPath "C:\Other\Path\" -outPath "C:\Still\another\Path\" -label 123 : Will search C:\Other\Path\ for any files labeled with 123 and	attempt to extract the embedded file into C:\Still\another\Path\
-	 
-Basic Smuggle Bus Useage is as follows:
-
-	 .\smuggle_bus.ps1 -mode [on/off] -contraband [path to file/file(s) to smuggle] -busPath [path for smuggle buses; default is CWD] -outPath [path for extracted files; default is CWD] -archive [set to $true to enable archive mode] -archivePassword [password for encrypted archive; default is random password] -maskFile [specific mask file you want to use; default is random jpg] -label [smuggle bus file label] 
 
 ##>
 
@@ -52,8 +52,8 @@ Param (
 	[string]$mode, # mask on / mask off mode switch
 	[string]$contraband, # file(s) we're hiding
 	[int32[]]$label, # the label(s) hidden inside smuggle buses that we use to recognize and extract them
-	[string]$busPath=".\", # path in which to look for files
-	[string]$outPath=".\", # path to output extracted files in off mode
+	[string]$busPath=(pwd).Path, # path to deposit combined files in on mode, in which to look for combined files in off mode
+	[string]$outPath=(pwd).Path, # path to output extracted files in off mode
 	[bool]$archive, # option to zip up contents of specified path into encrypted archive before smuggling, specify password
 	[string]$maskFile, # option to specify a particular mask file
 	[string]$archivePassword="", # password for encrypted archive, only works if $archive is true
@@ -89,13 +89,13 @@ if (($mode -eq "on") -and ($archive)) {
 	}
 	
 	if (!$archivePassword) {
-		$passChars = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ23456789()_-,.()_-,.()_-,.()_-,.()_-,.@#$%^*()_+-=[];:'\,<.>/?".ToCharArray()
+		$passChars = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ()_-,.()_-,.()_-,.()_-,.()_-,.@#$%^*()_+-=[];:'\,<.>/?".ToCharArray()
 		1..5 | ForEach {  $archivePassword+= $passChars | Get-Random }
 	}
 	
 	if ($7zip) {
-		$chars = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ23456789()_-,()_-,()_-,()_-,()_-,".ToCharArray()
-		$charsEnd = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ23456789".ToCharArray()
+		$chars = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ()_-,()_-,()_-,()_-,()_-,".ToCharArray()
+		$charsEnd = "abcdefghijkmnopqrstuvwxyzABCEFGHJKLMNPQRSTUVWXYZ".ToCharArray()
 		$random=""
 		$random2=""
 		1..10 | ForEach {  $random+= $chars | Get-Random }
@@ -105,7 +105,7 @@ if (($mode -eq "on") -and ($archive)) {
 		
 		$archiveFile = "$busPath\$random"
 		$archiveFile2 = "$busPath\$random2"
-		$command1 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile`.zip `"$contraband`" -p$archivePassword"
+		$command1 = "`"c:\Program Files\7-Zip\7z.exe`" a `"$archiveFile`.zip`" `"$contraband`" -p`"$archivePassword`""
 		$command2 = "`"c:\Program Files\7-Zip\7z.exe`" a $archiveFile2`.zip $archiveFile -p$archivePassword"
 		cmd.exe /c $command1
 		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
@@ -127,7 +127,7 @@ if (($mode -eq "on") -and ($archive)) {
 		
 		$archiveFile = "$busPath\$random"
 		$archiveFile2 = "$busPath\$random2"
-		$command1 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile`.zip `"$contraband`" -p$archivePassword"
+		$command1 = "`"c:\Program Files\winRAR\winRAR.exe`" a `"$archiveFile`.zip`" `"$contraband`" -p`"$archivePassword`""
 		$command2 = "`"c:\Program Files\winRAR\winRAR.exe`" a $archiveFile2`.zip $archiveFile -p$archivePassword"
 		cmd.exe /c $command1
 		Rename-Item -Path "$archiveFile`.zip" -NewName "$archiveFile"
@@ -169,12 +169,55 @@ if ($mode -eq "on") {
 		ForEach ($f in $contrabandFiles) {
 			
 			if (!$maskFile) {
-				$mask = invoke-webrequest -Uri "https://picsum.photos/500"
-				$mask = $mask.content
-				$newName = Get-Random
-				$newName = "$newName`.jpg"
-				$newName = "$busPath\$newName"
-				$mask | set-content -encoding byte -Path $newName
+				$colorArray = "Red","Orange","Yellow","Green","Blue","Indigo","Violet"
+				$color = $colorArray[(1..($colorArray.Length - 1) | Get-Random)]
+				$color2 = $colorArray[(1..($colorArray.Length - 1) | Get-Random)]
+
+				$size = 900..1600 | Get-Random
+				$size2 = 900..1600 | Get-Random
+
+				$filename = Get-Random
+				$filename = "$filename`.png"
+				$filename = "$busPath\$filename"
+
+				$filename2 = Get-Random
+				$filename2 = "$filename2`.jpg"
+				$filename2 = "$busPath\$filename2"
+
+				$string = ""
+
+				$i = 1
+				while ($i -lt 50) {
+					$string += -join ((65..90) + (97..122) | Get-Random -Count 1 | % {[char]$_})
+					$i++
+				}
+
+				Add-Type -AssemblyName System.Drawing
+
+				$bmp = new-object System.Drawing.Bitmap $size,$size2 
+				$font = new-object System.Drawing.Font Consolas,24
+				$brushBg = [System.Drawing.Brushes]::$color 
+				$brushFg = [System.Drawing.Brushes]::$color2 
+				$graphics = [System.Drawing.Graphics]::FromImage($bmp) 
+				$graphics.FillRectangle($brushBg,0,0,$bmp.Width,$bmp.Height) 
+				$graphics.DrawString($string,$font,$brushFg,10,10) 
+				$graphics.Dispose() 
+				$bmp.Save($filename) 
+
+				$image = ([System.Drawing.Image]::FromFile($filename))
+
+				$Bitmap = [Drawing.Bitmap]::new($image.Width, $image.Height)
+				$g = [System.Drawing.Graphics]::FromImage($Bitmap)
+				$g.Clear([drawing.color]::White)
+				$g.DrawImageUnscaled($Image, 0, 0);
+
+				$Bitmap.Save($filename2, [System.Drawing.Imaging.ImageFormat]::Jpeg)
+				
+				$image.Dispose()
+				Remove-Item $filename
+
+				$newName = $filename2
+				$mask = Get-Content -encoding byte $newName
 			} else {
 				$mask = Get-Content -encoding byte $maskFile
 				$newName = (Get-ChildItem $maskFile).Name
@@ -255,7 +298,6 @@ if ($mode -eq "on") {
 			}
 		}
 	}
-	
 	write-host "`n`n"
 	
 }
@@ -375,11 +417,10 @@ if ($mode -eq "off") {
 							$extractCommand2 = "`"c:\Program Files\7-Zip\7z.exe`" e `"$outPath\$contrabandOutRandom$contrabandFileName~`" -p$archivePasswordExtract -o$outPath\*"
 							cmd /c $extractCommand
 							cmd /c $extractCommand2
-							Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName" -Recurse
-							Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName~" -Recurse
+							#Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName" -Recurse
+							#Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName~" -Recurse
 							$extractDir = (Get-Childitem "$outPath\*~" | sort LastWriteTime | select -last 1).FullName
 							Copy-Item -Path "$extractDir/*" -Destination $outPath -Recurse
-							Remove-Item $extractDir -Recurse
 						} else {
 				
 						write-host "*** Can unzip via following command:`n"
@@ -395,11 +436,10 @@ if ($mode -eq "off") {
 							$extractCommand2 = "`"c:\Program Files\winRAR\winRAR.exe`" e $outPath\$contrabandOutRandom$contrabandFileName~ -p`"$archivePasswordExtract`" -o$outPath\*"
 							cmd /c $extractCommand
 							cmd /c $extractCommand2
-							Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName" -Recurse
-							Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName~" -Recurse
+							#Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName" -Recurse
+							#Remove-Item "$outPath\$contrabandOutRandom$contrabandFileName~" -Recurse
 							$extractDir = (Get-Childitem "$outPath\*~" | sort LastWriteTime | select -last 1).FullName
 							Copy-Item -Path "$extractDir/*" -Destination $outPath -Recurse
-							Remove-Item $extractDir -Recurse
 						} else {
 							
 						write-host "*** Can unzip via following command:`n"
