@@ -7,8 +7,6 @@ Demo and Discussion Video: https://www.youtube.com/watch?v=92KRJRhhMyA
 
 Welcome to Smuggle Bus, your ultimate (or at least pretty good) file type bypass tool
 
-Smuggle Bus was created by Jason Caminsky--direct feedback to @helmutye0 on twitter
-
 This tool was created purely for education, research, and legitimate use--if you do bad things with it, it's on you
 
 There are two variants of Smuggle Bus--regular (embeds/extracts files from a mask file) and IEX (restricted to powershell scripts--embeds powershell script into a mask file / extracts and automatically executes an embedded powershell script via invoke-expression; note that the embedded powershell script must be a one-liner/have all lines separated by colons)
